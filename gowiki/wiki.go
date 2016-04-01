@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"text/template"
 )
 
 /*
@@ -64,12 +64,17 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	p, _ := loadPage(title) // Load the page data
 	// formating the page with a string of simple HTML, and writes it to w, the
 	// http.ResponseWriter.
-	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+	// instead of html string using html/template package to load html
+	renderTemplate(w, "edit", p)
 }
 
 /*
 EditHandler function loads the page or if it doesn't exist, create an empty Page
 struct and displays an HTML form.
+
+html/template package is part of the Go standard library. we can use html/template
+to keep the HTML in a separate file, allowing us to change the layout of our edit
+page without modifying the underlying Go code.
 */
 func editHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/edit/"):]
@@ -77,26 +82,31 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	fmt.Fprintf(w,
-		"<h1>Editing %s</h1>"+
-			"<form action=\"/save/$s\" method=\"POST\">"+
-			"<textarea name=\"body\">%s</textarea><br />"+
-			"<input type=\"submit\" value=\"Save\">"+
-			"</form>",
-		p.Title, p.Title, p.Body)
+	renderTemplate(w, "edit", p)
+}
+
+/*
+RenderTemplate - refactoring view and editHandler function
+*/
+func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+	// template.ParseFiles will read the contents of given html file and returns
+	// a *template.Template
+	t, _ := template.ParseFiles(tmpl + ".html")
+	// this method executes the template, writing the generated HTML to the
+	// http.ResponseWriter.
+	t.Execute(w, p)
 }
 
 /*
 SaveHandler function save form data
 */
 func saveHandler(w http.ResponseWriter, r *http.Response) {
-
 }
 
 func main() {
 	// using this view handler
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
-	http.HandleFunc("/save/", saveHandler)
+	//http.HandleFunc("/save/", saveHandler)
 	http.ListenAndServe(":8080", nil)
 }
