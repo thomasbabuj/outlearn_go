@@ -14,3 +14,9 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
      # Part 3
 
          - Using net/http to serve wiki pages
+
+     # Part 4
+
+         - Ability to edit pages.
+
+               - creating a new handler for edit page

@@ -54,13 +54,10 @@ func loadPage(title string) (*Page, error) {
 /*
 ViewHandler will allow users to view a wiki page. It will handle URLs prefixed
 with "/view/".
-
 extract the page title from r.URL.Path, the path component of the request URL.
 The Path is re-sliced with [len("/view/"):] to drop the leading "/view/"
 component of the request path. We are slicing the path because, the path will
 invariably begin with "/view/", which is not part of the page's title.
-
-
 */
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
@@ -70,8 +67,36 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
 }
 
+/*
+EditHandler function loads the page or if it doesn't exist, create an empty Page
+struct and displays an HTML form.
+*/
+func editHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/edit/"):]
+	p, err := loadPage(title)
+	if err != nil {
+		p = &Page{Title: title}
+	}
+	fmt.Fprintf(w,
+		"<h1>Editing %s</h1>"+
+			"<form action=\"/save/$s\" method=\"POST\">"+
+			"<textarea name=\"body\">%s</textarea><br />"+
+			"<input type=\"submit\" value=\"Save\">"+
+			"</form>",
+		p.Title, p.Title, p.Body)
+}
+
+/*
+SaveHandler function save form data
+*/
+func saveHandler(w http.ResponseWriter, r *http.Response) {
+
+}
+
 func main() {
 	// using this view handler
 	http.HandleFunc("/view/", viewHandler)
+	http.HandleFunc("/edit/", editHandler)
+	http.HandleFunc("/save/", saveHandler)
 	http.ListenAndServe(":8080", nil)
 }
