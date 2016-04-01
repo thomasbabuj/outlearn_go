@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 )
 
 /*
@@ -50,9 +51,27 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+/*
+ViewHandler will allow users to view a wiki page. It will handle URLs prefixed
+with "/view/".
+
+extract the page title from r.URL.Path, the path component of the request URL.
+The Path is re-sliced with [len("/view/"):] to drop the leading "/view/"
+component of the request path. We are slicing the path because, the path will
+invariably begin with "/view/", which is not part of the page's title.
+
+
+*/
+func viewHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/view/"):]
+	p, _ := loadPage(title) // Load the page data
+	// formating the page with a string of simple HTML, and writes it to w, the
+	// http.ResponseWriter.
+	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+}
+
 func main() {
-	p1 := &Page{Title: "TestPage", Body: []byte("This is a sample page")}
-	p1.save()
-	p2, _ := loadPage("TestPage")
-	fmt.Println(string(p2.Body))
+	// using this view handler
+	http.HandleFunc("/view/", viewHandler)
+	http.ListenAndServe(":8080", nil)
 }

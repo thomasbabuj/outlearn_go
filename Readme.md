@@ -10,3 +10,7 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
      # Part 2
 
          - Introducing the net/http package - create a simple web server
+
+     # Part 3
+
+         - Using net/http to serve wiki pages
