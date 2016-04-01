@@ -61,11 +61,18 @@ invariably begin with "/view/", which is not part of the page's title.
 */
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
-	p, _ := loadPage(title) // Load the page data
+	// handling non-existent pages
+	p, err := loadPage(title) // Load the page data
+	if err != nil {
+		// if there is no page, then redirect to edit route and add 302 status in
+		// localtion header
+		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
+	}
 	// formating the page with a string of simple HTML, and writes it to w, the
 	// http.ResponseWriter.
 	// instead of html string using html/template package to load html
-	renderTemplate(w, "edit", p)
+	renderTemplate(w, "view", p)
 }
 
 /*

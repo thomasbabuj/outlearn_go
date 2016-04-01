@@ -23,3 +23,4 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
                - using html/template package instead of hard-coded HTML and modify the editHandler function to use html/template
                - creating template for viewHanlder and modify handler function
                - refactoring view and editHanlder code, by introducing renderTemplate function since both contains same templating code.
+               - handling the non-existent pages
