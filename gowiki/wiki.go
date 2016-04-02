@@ -7,6 +7,16 @@ import (
 )
 
 /*
+Creating a global variable name tempaltes, and initialize it with ParseFiles.
+tempate.Must is a convenience wrapper that panics when passed a non-nil error
+value, otherwise it returns the *Template
+
+template.ParseFiles will read the contents of given html file and returns
+a *template.Template
+*/
+var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+
+/*
  Defining the data structures for our wiki.Page struct
  has two fields title and body. The body element is a byte slice
  rather then a string becuase that is the type expected by the
@@ -96,16 +106,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 RenderTemplate - refactoring view and editHandler function
 */
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	// template.ParseFiles will read the contents of given html file and returns
-	// a *template.Template
-	t, err := template.ParseFiles(tmpl + ".html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// this method executes the template, writing the generated HTML to the
-	// http.ResponseWriter.
-	err = t.Execute(w, p)
+	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

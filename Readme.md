@@ -31,3 +31,6 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
         - Error Handling
 
                - Included error handling in renderTemplate and saveHandler functions.
+     # Part 6
+
+        - Template caching
