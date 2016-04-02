@@ -98,10 +98,17 @@ RenderTemplate - refactoring view and editHandler function
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	// template.ParseFiles will read the contents of given html file and returns
 	// a *template.Template
-	t, _ := template.ParseFiles(tmpl + ".html")
+	t, err := template.ParseFiles(tmpl + ".html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	// this method executes the template, writing the generated HTML to the
 	// http.ResponseWriter.
-	t.Execute(w, p)
+	err = t.Execute(w, p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 /*
@@ -111,7 +118,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/save/"):]
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	p.save()
+	// Any error occured during p.save() will be reported to the user.
+	err := p.save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 

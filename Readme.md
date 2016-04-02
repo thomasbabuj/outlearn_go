@@ -25,3 +25,9 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
                - refactoring view and editHanlder code, by introducing renderTemplate function since both contains same templating code.
                - handling the non-existent pages
                - saveHanlders will handle the form submission.
+
+      # Part 5
+
+        - Error Handling
+
+               - Included error handling in renderTemplate and saveHandler functions.
