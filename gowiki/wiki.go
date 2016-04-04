@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"text/template"
 )
 
@@ -15,6 +17,13 @@ template.ParseFiles will read the contents of given html file and returns
 a *template.Template
 */
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+
+/*
+global variable to store our validation regex
+regexp.MustCompile is distinict from Compile in that it will panic if the
+expression compilation fails, while Compile returns an error as a second parameter.
+*/
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 /*
  Defining the data structures for our wiki.Page struct
@@ -70,7 +79,10 @@ component of the request path. We are slicing the path because, the path will
 invariably begin with "/view/", which is not part of the page's title.
 */
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/view/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	// handling non-existent pages
 	p, err := loadPage(title) // Load the page data
 	if err != nil {
@@ -94,12 +106,34 @@ to keep the HTML in a separate file, allowing us to change the layout of our edi
 page without modifying the underlying Go code.
 */
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/edit/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
 	renderTemplate(w, "edit", p)
+}
+
+/*
+SaveHandler function save form data
+*/
+func saveHandler(w http.ResponseWriter, r *http.Request) {
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
+	body := r.FormValue("body")
+	p := &Page{Title: title, Body: []byte(body)}
+	// Any error occured during p.save() will be reported to the user.
+	err = p.save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
 /*
@@ -113,19 +147,17 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 
 /*
-SaveHandler function save form data
+GetTitle validate path and extract the page title
 */
-func saveHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/save/"):]
-	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
-	// Any error occured during p.save() will be reported to the user.
-	err := p.save()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		// if the title is invalid, the function will write a "404 not found" error.
+		http.NotFound(w, r)
+		return "", errors.New("Invalid Page Title")
 	}
-	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+	// If the title is valid, it will return along with a nil error value.
+	return m[2], nil
 }
 
 func main() {
