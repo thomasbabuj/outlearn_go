@@ -16,7 +16,7 @@ value, otherwise it returns the *Template
 template.ParseFiles will read the contents of given html file and returns
 a *template.Template
 */
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 
 /*
 global variable to store our validation regex
@@ -49,7 +49,7 @@ If all goes well, save method will return nil ( zero value for pointers,
 interfaces and some other types.)
 */
 func (p *Page) save() error {
-	filename := p.Title + ".txt"
+	filename := "data/" + p.Title + ".txt"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
@@ -62,7 +62,7 @@ io.ReadFile returns []byte and error. Here you can collect the body slice
 and ignore the error by using underscore symbol (blank identifier).
 */
 func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+	filename := "data/" + title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
