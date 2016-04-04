@@ -39,4 +39,14 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
 
         - Validation
 
-             fixing the serious security flaw ( a user an supply an arbitrary path to be read/written on the server)
+             - fixing the serious security flaw ( a user an supply an arbitrary path to be read/written on the server)
+
+     # Part 8
+
+         - Function Literals and closures
+
+             - using function literals we are abstracting the error handlers repeated
+             code.
+             - rewriting the function definition of the each handers to accept a
+             title string
+             - removing the getTitle code because of the makeHandler

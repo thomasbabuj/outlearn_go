@@ -78,11 +78,7 @@ The Path is re-sliced with [len("/view/"):] to drop the leading "/view/"
 component of the request path. We are slicing the path because, the path will
 invariably begin with "/view/", which is not part of the page's title.
 */
-func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
+func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	// handling non-existent pages
 	p, err := loadPage(title) // Load the page data
 	if err != nil {
@@ -105,11 +101,7 @@ html/template package is part of the Go standard library. we can use html/templa
 to keep the HTML in a separate file, allowing us to change the layout of our edit
 page without modifying the underlying Go code.
 */
-func editHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
+func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -120,15 +112,11 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 /*
 SaveHandler function save form data
 */
-func saveHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
+func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	// Any error occured during p.save() will be reported to the user.
-	err = p.save()
+	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -160,10 +148,25 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil
 }
 
+/*
+MakeHandler function is a wrapper function that takes a function of the handler
+type and returns a function of type http.HandlerFunc
+*/
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			http.NotFound(w, r)
+			return
+		}
+		fn(w, r, m[2])
+	}
+}
+
 func main() {
 	// using this view handler
-	http.HandleFunc("/view/", viewHandler)
-	http.HandleFunc("/edit/", editHandler)
-	http.HandleFunc("/save/", saveHandler)
+	http.HandleFunc("/view/", makeHandler(viewHandler))
+	http.HandleFunc("/edit/", makeHandler(editHandler))
+	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.ListenAndServe(":8080", nil)
 }
