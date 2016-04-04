@@ -34,3 +34,9 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
      # Part 6
 
         - Template caching
+
+     # Part 7
+
+        - Validation
+
+             fixing the serious security flaw ( a user an supply an arbitrary path to be read/written on the server)
