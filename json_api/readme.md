@@ -24,3 +24,13 @@ Step 3
 Step 4
 
    Send back some JSON
+
+Step 5
+
+    Refactoring
+
+      - the Todo Model, by adding the struct tags we can control how our struct will be marshalled to JSON
+
+      - breaking the code into separate files.
+      - After refactoring the code into multiple files, we just need to use *go build* or *go install* to compiled the source code.
+      - For *go run* need to manually specify all the files.
