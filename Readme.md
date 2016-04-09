@@ -50,3 +50,14 @@ Building Web services in Go - Curated articles by Mat Ryer in Outlearn.com
              - rewriting the function definition of the each handers to accept a
              title string
              - removing the getTitle code because of the makeHandler
+
+     # Part 9
+
+          - Additional tasks
+
+             - Store templates in tmpl/ and page data in data/
+             - Add a handler to make a web root redirect to /view/frontPage
+             - Spruce up the page templates by making them valid HTML and adding
+             css rules.
+             - Display last modified date
+             - Interpage linking by converting intances of [PageName] 

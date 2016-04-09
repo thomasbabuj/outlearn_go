@@ -2,21 +2,36 @@ package main
 
 import (
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
-	"text/template"
+	"time"
 )
 
 /*
-Creating a global variable name tempaltes, and initialize it with ParseFiles.
-tempate.Must is a convenience wrapper that panics when passed a non-nil error
-value, otherwise it returns the *Template
-
-template.ParseFiles will read the contents of given html file and returns
-a *template.Template
+Page is a struct that defining the data structures for our wiki.Page struct
+has two fields title and body. The body element is a byte slice
+rather then a string becuase that is the type expected by the
+io libraries.
 */
-var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
+type Page struct {
+	Title       string
+	Body        []byte    // a byte slice
+	ModifyTime  time.Time // modification time
+	DisplayBody template.HTML
+}
+
+/*
+	Creating a global variable name tempaltes, and initialize it with ParseFiles.
+	tempate.Must is a convenience wrapper that panics when passed a non-nil error
+	value, otherwise it returns the *Template
+
+	template.ParseFiles will read the contents of given html file and returns
+	a *template.Template
+*/
+var temp = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 
 /*
 global variable to store our validation regex
@@ -26,15 +41,9 @@ expression compilation fails, while Compile returns an error as a second paramet
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 /*
- Defining the data structures for our wiki.Page struct
- has two fields title and body. The body element is a byte slice
- rather then a string becuase that is the type expected by the
- io libraries.
+adding a regular expression to find instances of [PageName]
 */
-type Page struct {
-	Title string
-	Body  []byte // a byte slice
-}
+var linkRegexp = regexp.MustCompile("\\[([a-zA-Z0-9]+)\\]")
 
 /*
 Save method is to persist Page data
@@ -67,7 +76,12 @@ func loadPage(title string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	fileInof, err := os.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	modifiedtime := fileInof.ModTime()
+	return &Page{Title: title, Body: body, ModifyTime: modifiedtime}, nil
 }
 
 /*
@@ -87,6 +101,15 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+
+	escapedBody := []byte(template.HTMLEscapeString(string(p.Body)))
+
+	p.DisplayBody = template.HTML(linkRegexp.ReplaceAllFunc(escapedBody, func(str []byte) []byte {
+		matched := linkRegexp.FindStringSubmatch(string(str))
+		out := []byte("<a href=\"/view/" + matched[1] + "\">" + matched[1] + "</a>")
+		return out
+	}))
+
 	// formating the page with a string of simple HTML, and writes it to w, the
 	// http.ResponseWriter.
 	// instead of html string using html/template package to load html
@@ -115,6 +138,7 @@ SaveHandler function save form data
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
+
 	// Any error occured during p.save() will be reported to the user.
 	err := p.save()
 	if err != nil {
@@ -128,7 +152,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 RenderTemplate - refactoring view and editHandler function
 */
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+
+	err := temp.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -172,9 +197,9 @@ func frontHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// using this view handler
-	http.HandleFunc("/", frontHandler)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/", frontHandler)
 	http.ListenAndServe(":8080", nil)
 }
