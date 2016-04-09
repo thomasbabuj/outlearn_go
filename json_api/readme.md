@@ -34,3 +34,14 @@ Step 5
       - breaking the code into separate files.
       - After refactoring the code into multiple files, we just need to use *go build* or *go install* to compiled the source code.
       - For *go run* need to manually specify all the files.
+
+Step 6
+
+    Outputting a Web Log
+
+      - in go there is no web logging package or functionality in the standard library, so we have to create it.
+      - We will be passing our handler to this function, which will then wrap the passed handler with logging and timing functionality.
+
+Step 7
+
+    Applying the logger decorator
