@@ -14,3 +14,13 @@ Step 2
   Creating some basic routes
 
     - added two routes ( todoIndex and todoShow )
+
+Step 3
+
+   Creating a basic Model
+
+    - In Go a struct will typically serve as model.
+
+Step 4
+
+   Send back some JSON

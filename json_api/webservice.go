@@ -1,12 +1,28 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
+
+/*
+Todo Model
+*/
+type Todo struct {
+	Name      string
+	Completed bool
+	Due       time.Time
+}
+
+/*
+Todos is a slice of Todo
+*/
+type Todos []Todo
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -27,7 +43,13 @@ func Index(w http.ResponseWriter, r *http.Request) {
 TodoIndex handler
 */
 func TodoIndex(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Todo Index!")
+	//Static slice of todos
+	todos := Todos{
+		Todo{Name: "Write presentation"},
+		Todo{Name: "Host meetup"},
+	}
+
+	json.NewEncoder(w).Encode(todos)
 }
 
 /*
